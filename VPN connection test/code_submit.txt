@@ -1,0 +1,212 @@
+
+
+
+## The login interface
+"""
+##Python code
+# Group: Bio
+
+"""
+import tkinter as tk
+import tkinter.messagebox
+import pickle
+#Window
+window=tk.Tk()
+window.title('Bio group\'s VPN')
+window.geometry('450x300')
+#Locate Canvas
+canvas=tk.Canvas(window,height=300,width=500)
+imagefile=tk.PhotoImage(file='background.png')
+image=canvas.create_image(0,0,anchor='nw',image=imagefile)
+canvas.pack(side='top')
+#Password
+tk.Label(window,text='Users name:').place(x=20,y=170)
+tk.Label(window,text='Password:').place(x=20,y=205)
+#users name frame
+var_usr_name=tk.StringVar()
+entry_usr_name=tk.Entry(window,textvariable=var_usr_name)
+entry_usr_name.place(x=100,y=170)
+#password frame
+var_usr_pwd=tk.StringVar()
+entry_usr_pwd=tk.Entry(window,textvariable=var_usr_pwd,show='*')
+entry_usr_pwd.place(x=100,y=205)
+ 
+#login function
+def usr_log_in():
+    #get info
+    usr_name=var_usr_name.get()
+    usr_pwd=var_usr_pwd.get()
+    #locally info
+    try:
+        with open('user_info.pickle','rb') as usr_file:
+            usrs_info=pickle.load(usr_file)
+    except FileNotFoundError:
+        with open('user_info.pickle','wb') as usr_file:
+            usrs_info={'admin':'admin'}
+            pickle.dump(usrs_info,usr_file)
+    #check unser
+    if usr_name in usrs_info:
+        if usr_pwd == usrs_info[usr_name]:
+            tk.messagebox.showinfo(title='welcome',
+                                   message='Welcome：'+usr_name)
+        #password wrong
+        else:
+            tk.messagebox.showerror(message='Please check login infomation.')
+    #empty return
+    elif usr_name=='' or usr_pwd=='' :
+        tk.messagebox.showerror(message='Users name and Password cannot be empty.')
+    #not found
+    else:
+        is_signup=tk.messagebox.askyesno('Welcome to use bio group\'s VPN','Do you want to sign up now?')
+        if is_signup:
+            usr_sign_up()
+#reg function
+def usr_sign_up():
+    #check reg function
+    def signtowcg():
+        #get info
+        nn=new_name.get()
+        np=new_pwd.get()
+        npf=new_pwd_confirm.get()
+ 
+        #double check
+        try:
+            with open('user_info.pickle','rb') as usr_file:
+                exist_usr_info=pickle.load(usr_file)
+        except FileNotFoundError:
+            exist_usr_info={}           
+            
+        #check user info
+        if nn in exist_usr_info:
+            tk.messagebox.showerror('wrong','user exist')
+        elif np =='' or nn=='':
+            tk.messagebox.showerror('wrong','user and password could not empty')
+        elif np !=npf:
+            tk.messagebox.showerror('wrong','not ')
+        #registrate to database
+        else:
+            exist_usr_info[nn]=np
+            with open('usr_info.pickle','wb') as usr_file:
+                pickle.dump(exist_usr_info,usr_file)
+            tk.messagebox.showinfo('welcome','registrate success')
+            #reg sucususs 
+            window_sign_up.destroy()
+    #new canvas
+    window_sign_up=tk.Toplevel(window)
+    window_sign_up.geometry('350x200')
+    window_sign_up.title('Sign up')
+    #user tag and frame
+    new_name=tk.StringVar()
+    tk.Label(window_sign_up,text='User\'name：').place(x=10,y=10)
+    tk.Entry(window_sign_up,textvariable=new_name).place(x=170,y=10)
+    #password tag and frame
+    new_pwd=tk.StringVar()
+    tk.Label(window_sign_up,text='Please enter password：').place(x=10,y=50)
+    tk.Entry(window_sign_up,textvariable=new_pwd,show='*').place(x=170,y=50)    
+    #re-type password tag and frame
+    new_pwd_confirm=tk.StringVar()
+    tk.Label(window_sign_up,text='Please enter password again：').place(x=10,y=90)
+    tk.Entry(window_sign_up,textvariable=new_pwd_confirm,show='*').place(x=170,y=90)    
+    #confirm buttom and position
+    bt_confirm_sign_up=tk.Button(window_sign_up,text='Information confirmed',
+                                 command=signtowcg)
+    bt_confirm_sign_up.place(x=150,y=130)
+#exit function
+def usr_sign_quit():
+    window.destroy()
+#login and reg buttom
+bt_login=tk.Button(window,text='Sign in',command=usr_log_in)
+bt_login.place(x=20,y=270)
+bt_logup=tk.Button(window,text='Sign up',command=usr_sign_up)
+bt_logup.place(x=190,y=270)
+bt_logquit=tk.Button(window,text='Exit',command=usr_sign_quit)
+bt_logquit.place(x=380,y=270)
+#main function
+window.mainloop()
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------
+# Aws server: Current Oracle Linux 7 Image (at time of the recording): OL7.6-x86_64-HVM-2019-01-29
+
+# Once done, collect to the server from your terminal.
+
+# ip: 3.85.33.21    port:22
+  connect by ssh
+
+# If you use windows, you need to use putty to login in the server. 
+
+# Below is based on the Installation tutorial on pritunl
+
+# https://docs.pritunl.com/docs/installation
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+# shell code
+
+## AWS install
+
+sudo tee /etc/yum.repos.d/mongodb-org-4.2.repo << EOF
+[mongodb-org-4.2]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/7/mongodb-org/4.2/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc
+EOF
+
+sudo tee /etc/yum.repos.d/pritunl.repo << EOF
+[pritunl]
+name=Pritunl Repository
+baseurl=https://repo.pritunl.com/stable/yum/oraclelinux/7/
+gpgcheck=1
+enabled=1
+EOF
+
+sudo yum -y install oracle-epel-release-el7
+sudo yum-config-manager --enable ol7_developer_epel
+gpg --keyserver hkp://keyserver.ubuntu.com --recv-keys 7568D9BB55FF9E5287D586017AE645C0CF8E292A
+gpg --armor --export 7568D9BB55FF9E5287D586017AE645C0CF8E292A > key.tmp; sudo rpm --import key.tmp; rm -f key.tmp
+sudo yum -y remove iptables-services
+sudo yum -y install pritunl mongodb-org
+sudo systemctl enable mongod pritunl
+sudo systemctl start mongod pritunl
+
+## Automatic update
+
+sudo yum -y install yum-cron
+sudo sed -i 's/^update_cmd =.*/update_cmd = default/g' /etc/yum/yum-cron.conf
+sudo sed -i 's/^download_updates =.*/download_updates = yes/g' /etc/yum/yum-cron.conf
+sudo sed -i 's/^apply_updates =.*/apply_updates = yes/g' /etc/yum/yum-cron.conf
+sudo systemctl enable yum-cron
+sudo systemctl start yum-cron
+
+##Automatic Ksplice Updates
+sudo sed -i 's/^autoinstall =.*/autoinstall = yes/g' /etc/uptrack/uptrack.conf
+------------------------------------------------------------------------------------------------------------------------------------
+ 
+After finish this,
+
+run code:
+'sudo pritunl setup-key'
+it will produce the password
+
+Then login in 
+https://https://3.85.33.21/
+
+paste the password from terminal 
+
+run code:
+'sudo pritunl default-password'
+it will produce the username and password
+Login in, and then you are login the admin account to manage the VPN
+
+If you forget the password
+you can run
+'sudo pritunl reset-password' to reset your password.
+
+
+
+
